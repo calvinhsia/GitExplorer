@@ -1,5 +1,8 @@
-﻿using System;
+﻿using LibGit2Sharp;
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -13,6 +16,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Utility;
 /*
 https://www.youtube.com/watch?v=RxHJdapz2p0
 
@@ -27,6 +31,78 @@ git --no-page log --oneline
  */
 namespace GitExplorer
 {
+    /// <summary>
+    /// Interaction logic for MainWindow.xaml
+    /// </summary>
+    public partial class MainWindow : Window
+    {
+        public string RepoFolder { get; set; } = @"c:\Repos\vscode-fabric";
+        public ObservableCollection<string> LstBranches { get; set; } = new();
+        public MainWindow()
+        {
+            this.WindowState = WindowState.Maximized;
+            InitializeComponent();
+            this.Loaded += MainWindow_Loaded;
+        }
+
+        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                DataContext = this;
+                var repo = new LibGit2Sharp.Repository(this.RepoFolder);
+                LstBranches = new ObservableCollection<string>(repo.Branches.Select(b => b.FriendlyName));
+                lvBranches.SelectionChanged += (o, e) =>
+                {
+                    dbCommits.Children.Clear();
+                    var branch = repo.Branches.Where(b => b.FriendlyName == ((string)lvBranches.SelectedItem)).Single();
+                    var qCommits = from comm in branch.Commits
+                                   select new
+                                   {
+                                       _commit = comm,
+                                       comm.Message,
+                                       comm.Author.When,
+                                       comm.Id,
+                                       comm.Author
+                                   };
+                    var browCommits = new BrowsePanel(qCommits);
+                    dbCommits.Children.Add(browCommits);
+                    browCommits.BrowseList.SelectionChanged += (oc, ec) =>
+                    {
+                        var selected = browCommits.BrowseList.SelectedItems[0];
+                        if (selected != null)
+                        {
+                            dbCommitTree.Children.Clear();
+                            var props = TypeDescriptor.GetProperties(selected);
+                            var commit = (Commit)(props["_commit"]!.GetValue(selected)!);
+                            var commTree = new CommitTreeView(commit);
+                            dbCommitTree.Children.Add(commTree);
+                            
+
+                        }
+
+
+                    };
+                };
+                var res = await ExecCmd.DoCmdAsync("status", this.RepoFolder);
+
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.ToString());
+            }
+        }
+
+        private void BtnChooseFolder_Click(object sender, RoutedEventArgs e)
+        {
+            //var d = new System.Windows.Forms.FolderBrowserDialog
+            //{
+            //    Description = "",
+            //    ShowNewFolderButton = false,
+            //};
+
+        }
+    }
     class ExecCmd
     {
         public static async Task<string> DoCmdAsync(string args, string workdir)
@@ -37,7 +113,7 @@ namespace GitExplorer
                 RedirectStandardError = true,
                 RedirectStandardInput = true,
                 RedirectStandardOutput = true,
-                CreateNoWindow = true, 
+                CreateNoWindow = true,
                 WorkingDirectory = workdir
             };
 
@@ -67,39 +143,6 @@ namespace GitExplorer
                 throw new Exception(sbError.ToString());
             }
             return sbOutput.ToString();
-        }
-    }
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
-    public partial class MainWindow : Window
-    {
-        public MainWindow()
-        {
-            InitializeComponent();
-            this.Loaded += MainWindow_Loaded;
-        }
-
-        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                //var d = new System.Windows.Forms.FolderBrowserDialog
-                //{
-                //    Description = "",
-                //    ShowNewFolderButton = false,
-                //};
-                var dir = @"c:\Repos\vscode-fabric";
-                var repo = new LibGit2Sharp.Repository(dir);
-                var br = repo.Branches;
-                var res = await ExecCmd.DoCmdAsync("status", dir);
-                var xs = 33;
-
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.ToString());
-            }
         }
     }
 }

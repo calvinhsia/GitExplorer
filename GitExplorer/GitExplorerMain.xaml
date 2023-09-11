@@ -7,6 +7,33 @@
         mc:Ignorable="d"
         Title="GitExplorer" Height="450" Width="800">
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="25" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <StackPanel Orientation="Horizontal">
+            <Button Content="Choose Folder" Name="btnChooseFolder" Click="BtnChooseFolder_Click"/>
+            <TextBox Name="tbxFolder" Text="{Binding RepoFolder}"/>
+        </StackPanel>
+        <DockPanel Grid.Row="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="300" />
+                    <ColumnDefinition Width="3" />
+                    <ColumnDefinition Width="300" />
+                    <ColumnDefinition Width="3" />
+                    <ColumnDefinition Width="300" />
+                    <ColumnDefinition Width="3" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <ListView Name="lvBranches" ItemsSource="{Binding LstBranches}"/>
+                <GridSplitter Grid.Column = "1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width = "3" Background="LightBlue"/>
+                <DockPanel Name="dbCommits" Grid.Column="2"/>
+                <GridSplitter Grid.Column = "3" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width = "3" Background="LightBlue"/>
+                <DockPanel Name="dbCommitTree" Grid.Column="4"/>
+                <GridSplitter Grid.Column = "5" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width = "3" Background="LightBlue"/>
+            </Grid>
+        </DockPanel>
 
     </Grid>
 </Window>
