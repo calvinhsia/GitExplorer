@@ -34,12 +34,19 @@ namespace GitExplorer
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class GitexplorerMainWindow : Window
     {
         public string RepoFolder { get; set; } = @"c:\Repos\vscode-fabric";
+
+        private Repository? _repository; // disposable
+
         public ObservableCollection<string> LstBranches { get; set; } = new();
-        public MainWindow()
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+        public static GitexplorerMainWindow Instance { get; private set; }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+        public GitexplorerMainWindow()
         {
+            Instance = this;
             this.WindowState = WindowState.Maximized;
             InitializeComponent();
             this.Loaded += MainWindow_Loaded;
@@ -50,12 +57,12 @@ namespace GitExplorer
             try
             {
                 DataContext = this;
-                var repo = new LibGit2Sharp.Repository(this.RepoFolder);
-                LstBranches = new ObservableCollection<string>(repo.Branches.Select(b => b.FriendlyName));
+                this._repository = new Repository(this.RepoFolder);
+                LstBranches = new ObservableCollection<string>(this._repository.Branches.Select(b => b.FriendlyName));
                 lvBranches.SelectionChanged += (o, e) =>
                 {
-                    dbCommits.Children.Clear();
-                    var branch = repo.Branches.Where(b => b.FriendlyName == ((string)lvBranches.SelectedItem)).Single();
+                    dpCommits.Children.Clear();
+                    var branch = this._repository.Branches.Where(b => b.FriendlyName == ((string)lvBranches.SelectedItem)).Single();
                     var qCommits = from comm in branch.Commits
                                    select new
                                    {
@@ -66,18 +73,71 @@ namespace GitExplorer
                                        comm.Author
                                    };
                     var browCommits = new BrowsePanel(qCommits);
-                    dbCommits.Children.Add(browCommits);
+                    dpCommits.Children.Add(browCommits);
                     browCommits.BrowseList.SelectionChanged += (oc, ec) =>
                     {
                         var selected = browCommits.BrowseList.SelectedItems[0];
                         if (selected != null)
                         {
-                            dbCommitTree.Children.Clear();
+                            dpCommitTree.Children.Clear();
                             var props = TypeDescriptor.GetProperties(selected);
                             var commit = (Commit)(props["_commit"]!.GetValue(selected)!);
                             var commTree = new CommitTreeView(commit);
-                            dbCommitTree.Children.Add(commTree);
-                            
+                            dpCommitTree.Children.Add(commTree);
+                            commTree.SelectedItemChanged += (ot, et) =>
+                            {
+                                var itm = commTree.SelectedItem as TreeItem;
+                                if (itm?._gitObject is Blob blob)
+                                {
+                                    var path = itm._TreeEntry?.Path;
+                                    var histList = this._repository.Commits.QueryBy(path).ToList();
+                                    dpFileCommits.Children.Clear();
+                                    var qhist = from logEntry in histList
+                                                select new
+                                                {
+                                                    _logEntry = logEntry,
+                                                    Comm = logEntry.Commit.MessageShort
+
+                                                };
+                                    var brhist = new BrowsePanel(qhist);
+                                    dpFileCommits.Children.Add(brhist);
+                                    brhist.BrowseList.SelectionChanged += (oh, eh) =>
+                                    {
+                                        var selHist = brhist.BrowseList.SelectedItem;
+                                        var logentry = (LogEntry)(TypeDescriptor.GetProperties(selHist)["_logEntry"]!.GetValue(selHist)!);
+                                        var ndx = histList.FindIndex(h => h.Commit.Id == logentry.Commit.Id);
+                                        if (ndx < histList.Count - 1)
+                                        {
+                                            var tr1 = histList[ndx].Commit.Tree;
+                                            var tr2 = histList[ndx + 1].Commit.Tree;
+                                            var diff = this._repository.Diff.Compare<TreeChanges>(tr1, tr2, new[] { path });
+                                            dpFileDiff.Children.Clear();
+                                            var lv = new ListView();
+                                            dpFileDiff.Children.Add(lv);
+                                            foreach (var change in diff.Modified)
+                                            {
+                                                var bNew = this._repository.Lookup(change.Oid) as Blob;
+                                                var bOld = this._repository.Lookup(change.OldOid) as Blob;
+                                                var dbob = this._repository.Diff.Compare(bOld, bNew);
+                                                var patch = dbob.Patch;
+                                                lv.Items.Add(patch);
+                                            }
+
+                                        }
+
+                                    };
+
+
+                                }
+                                else if (itm?._gitObject is Tree tree)
+                                {
+                                    var differ = this._repository.Diff;
+                                    //                                    var diff = differ.Compare()
+
+                                }
+
+                            };
+
 
                         }
 
@@ -100,7 +160,7 @@ namespace GitExplorer
             //    Description = "",
             //    ShowNewFolderButton = false,
             //};
-
+            this._repository?.Dispose();
         }
     }
     class ExecCmd

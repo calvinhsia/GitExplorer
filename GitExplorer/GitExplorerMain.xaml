@@ -1,11 +1,11 @@
-﻿<Window x:Class="GitExplorer.MainWindow"
+﻿<Window x:Class="GitExplorer.GitexplorerMainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:GitExplorer"
         mc:Ignorable="d"
-        Title="GitExplorer" Height="450" Width="800">
+        Title="GitExplorer" Height="450" Width="1100">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="25" />
@@ -18,6 +18,8 @@
         <DockPanel Grid.Row="1">
             <Grid>
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="230" />
+                    <ColumnDefinition Width="3" />
                     <ColumnDefinition Width="300" />
                     <ColumnDefinition Width="3" />
                     <ColumnDefinition Width="300" />
@@ -28,10 +30,13 @@
                 </Grid.ColumnDefinitions>
                 <ListView Name="lvBranches" ItemsSource="{Binding LstBranches}"/>
                 <GridSplitter Grid.Column = "1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width = "3" Background="LightBlue"/>
-                <DockPanel Name="dbCommits" Grid.Column="2"/>
+                <DockPanel Name="dpCommits" Grid.Column="2"/>
                 <GridSplitter Grid.Column = "3" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width = "3" Background="LightBlue"/>
-                <DockPanel Name="dbCommitTree" Grid.Column="4"/>
+                <DockPanel Name="dpCommitTree" Grid.Column="4"/>
                 <GridSplitter Grid.Column = "5" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width = "3" Background="LightBlue"/>
+                <DockPanel Name="dpFileCommits" Grid.Column="6"/>
+                <GridSplitter Grid.Column = "7" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width = "3" Background="LightBlue"/>
+                <DockPanel Name="dpFileDiff" Grid.Column="8"/>
             </Grid>
         </DockPanel>
 

@@ -5,47 +5,53 @@ namespace GitExplorer
 {
     internal class CommitTreeView : TreeView
     {
-        private Commit commit;
+        private readonly Commit commit;
 
         public CommitTreeView(Commit commit)
         {
             this.commit = commit;
-            var childItems = new TreeItem(commit);
+            var childItems = new TreeItem(commit, treeEntry: null);
             this.Items.Add(childItems);
         }
     }
 
     internal class TreeItem : TreeViewItem
     {
-        public TreeItem()
+        public GitObject _gitObject;
+        public TreeEntry? _TreeEntry;
+        public TreeItem(GitObject gitObject, TreeEntry? treeEntry)
         {
+            this._TreeEntry = treeEntry;
+            this._gitObject = gitObject;
             this.IsExpanded = true;
+            if (gitObject is Commit commit)
+            {
+                this.Header = $"{commit.MessageShort} {commit.Id}";
+                this.AddTreeItems(commit.Tree);
+            }
+            _TreeEntry = treeEntry;
         }
-
-        public TreeItem(Commit commit)
-        {
-            this.Header = $"{commit.MessageShort} {commit.Id}";
-            this.AddTree(commit.Tree);
-            this.IsExpanded = true;
-
-        }
-        public void AddTree(Tree tree)
+        public void AddTreeItems(Tree tree)
         {
             foreach (var childTreeEntry in tree)
             {
-                switch(childTreeEntry.TargetType)
+                switch (childTreeEntry.TargetType)
                 {
                     case TreeEntryTargetType.Tree:
                         var treechild = (childTreeEntry.Target as Tree)!;
-                        var newitem = new TreeItem();
-                        newitem.Header = $"{childTreeEntry.Name} ${childTreeEntry.Mode}";
-                        newitem.AddTree(treechild);
+                        var newitem = new TreeItem(childTreeEntry.Target!, childTreeEntry)
+                        {
+                            Header = $"{childTreeEntry.Name}"
+                        };
+                        newitem.AddTreeItems(treechild);
                         this.Items.Add(newitem);
                         break;
                     case TreeEntryTargetType.Blob:
                         var blob = (childTreeEntry.Target as Blob)!;
-                        var newblobitem = new TreeItem();
-                        newblobitem.Header = $"{childTreeEntry.Name} ${childTreeEntry.Mode}";
+                        var newblobitem = new TreeItem(blob, childTreeEntry)
+                        {
+                            Header = $"{childTreeEntry.Name}"
+                        };
                         this.Items.Add(newblobitem);
                         var txt = blob.GetContentText();
                         newblobitem.ToolTip = txt;

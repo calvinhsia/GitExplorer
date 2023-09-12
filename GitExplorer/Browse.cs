@@ -527,6 +527,19 @@
             return sb.ToString();
         }
 
+        //public static string WriteOutputToTempFile(string strToOutput, string fExt = "txt", bool fStartIt = true)
+        //{
+        //    var tmpFileName = System.IO.Path.GetTempFileName(); //"C:\Users\calvinh\AppData\Local\Temp\tmp8509.tmp"
+        //    File.WriteAllText(tmpFileName, strToOutput, new UnicodeEncoding(bigEndian: false, byteOrderMark: true));
+        //    var filename = System.IO.Path.ChangeExtension(tmpFileName, fExt);
+
+        //    File.Move(tmpFileName, filename); // rename
+        //    if (fStartIt)
+        //    {
+        //        Process.Start(filename);
+        //    }
+        //    return filename;
+        //}
         public static string WriteOutputToTempFile(string strToOutput, string fExt = "txt", bool fStartIt = true)
         {
             var tmpFileName = System.IO.Path.GetTempFileName(); //"C:\Users\calvinh\AppData\Local\Temp\tmp8509.tmp"
@@ -536,7 +549,7 @@
             File.Move(tmpFileName, filename); // rename
             if (fStartIt)
             {
-                Process.Start(filename);
+                Process.Start(new ProcessStartInfo("cmd", $"/c start {filename}") { CreateNoWindow = true, UseShellExecute = false });
             }
             return filename;
         }
