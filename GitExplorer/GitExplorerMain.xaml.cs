@@ -57,8 +57,7 @@ namespace GitExplorer
             try
             {
                 DataContext = this;
-                this._repository = new Repository(this.RepoFolder);
-                LstBranches = new ObservableCollection<string>(this._repository.Branches.Select(b => b.FriendlyName));
+                Refresh();
                 lvBranches.SelectionChanged += (o, e) =>
                 {
                     dpCommits.Children.Clear();
@@ -155,12 +154,34 @@ namespace GitExplorer
 
         private void BtnChooseFolder_Click(object sender, RoutedEventArgs e)
         {
-            //var d = new System.Windows.Forms.FolderBrowserDialog
-            //{
-            //    Description = "",
-            //    ShowNewFolderButton = false,
-            //};
-            this._repository?.Dispose();
+            var dlog = new System.Windows.Forms.FolderBrowserDialog
+            {
+                Description = "choose a source controlled folder",
+                ShowNewFolderButton = false,
+            };
+            if (dlog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                this._repository?.Dispose();
+                this._repository = null;
+                this.RepoFolder = dlog.SelectedPath;
+                this.Refresh();
+
+            }
+        }
+        void Refresh()
+        {
+            this._repository = new Repository(this.RepoFolder);
+            dpCommits.Children.Clear();
+            dpCommitTree.Children.Clear();
+            dpFileCommits.Children.Clear();
+            dpFileDiff.Children.Clear();
+            LstBranches = new ObservableCollection<string>(this._repository.Branches.Select(b => b.FriendlyName));
+        }
+
+        private void BtnRefresh_Click(object sender, RoutedEventArgs e)
+        {
+            this.Refresh();
+
         }
     }
     class ExecCmd

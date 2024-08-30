@@ -14,6 +14,8 @@
         <StackPanel Orientation="Horizontal">
             <Button Content="Choose Folder" Name="btnChooseFolder" Click="BtnChooseFolder_Click"/>
             <TextBox Name="tbxFolder" Text="{Binding RepoFolder}"/>
+            <Button Content="Refresh" Name="btnRefresh" Click="BtnRefresh_Click"/>
+
         </StackPanel>
         <DockPanel Grid.Row="1">
             <Grid>
